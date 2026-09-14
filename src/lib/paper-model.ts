@@ -92,43 +92,74 @@ export function toExtractedPaper(doc: ExtractedDoc): ExtractedPaper {
   };
 }
 
+function claimFrom(
+  paper: ExtractedPaper,
+  row: { sentence: ExtractedPaper["sentences"][number]; kind: ClaimKind; salience: number }
+): ModelClaim {
+  const numbers = extractNumbers(row.sentence.text);
+  return {
+    id: makeId("claim"),
+    kind: row.kind,
+    text: ensureGistDoesNotLeak(
+      gistFromSentence(row.sentence.text, row.kind, numbers),
+      row.sentence.text,
+      row.kind,
+      numbers
+    ),
+    evidence: clipQuote(row.sentence.text, 280),
+    section: row.sentence.section,
+    sourceName: paper.name,
+    salience: row.salience,
+    numbers,
+  };
+}
+
+function kindWithSpan(sentences: ExtractedPaper["sentences"]): ClaimKind[] {
+  let inLimit = false;
+  return sentences.map((s) => {
+    if (/^limitations?\b/i.test(s.text) || /limit/i.test(s.section)) inLimit = true;
+    if (/^(recommendation|conclusion|takeaway)\b/i.test(s.text) || /recommend|conclusion/i.test(s.section)) {
+      inLimit = false;
+    }
+    if (inLimit) return "limit";
+    return classifyKind(s.text, s.section);
+  });
+}
+
 function pickClaims(paper: ExtractedPaper, budget: number): ModelClaim[] {
+  const kinds = kindWithSpan(paper.sentences);
   const ranked = paper.sentences
-    .map((s) => ({
+    .map((s, i) => ({
       sentence: s,
-      kind: classifyKind(s.text),
-      salience: scoreSentence(s.text, s.section, s.order),
+      kind: kinds[i],
+      salience: scoreSentence(s.text, s.section, s.order) + (kinds[i] === "limit" ? 2 : 0),
     }))
     .filter((row) => row.salience >= 2)
     .sort((a, b) => b.salience - a.salience);
 
   const chosen: ModelClaim[] = [];
-  const kinds = new Map<ClaimKind, number>();
+  const seenKinds = new Map<ClaimKind, number>();
+  const used = new Set<string>();
 
-  for (const row of ranked) {
+  const take = (row: (typeof ranked)[number]) => {
     const tokens = tokenSet(row.sentence.text);
-    if (chosen.some((c) => overlap(tokens, tokenSet(c.evidence)) > 0.62)) continue;
-    const already = kinds.get(row.kind) ?? 0;
-    if (already >= 3 && row.kind === "background") continue;
-    const numbers = extractNumbers(row.sentence.text);
-    const text = ensureGistDoesNotLeak(
-      gistFromSentence(row.sentence.text, row.kind, numbers),
-      row.sentence.text,
-      row.kind,
-      numbers
-    );
-    chosen.push({
-      id: makeId("claim"),
-      kind: row.kind,
-      text,
-      evidence: clipQuote(row.sentence.text, 280),
-      section: row.sentence.section,
-      sourceName: paper.name,
-      salience: row.salience,
-      numbers,
-    });
-    kinds.set(row.kind, already + 1);
+    if (used.has(row.sentence.id)) return false;
+    if (chosen.some((c) => overlap(tokens, tokenSet(c.evidence)) > 0.62)) return false;
+    const already = seenKinds.get(row.kind) ?? 0;
+    if (already >= 3 && row.kind === "background") return false;
+    chosen.push(claimFrom(paper, row));
+    used.add(row.sentence.id);
+    seenKinds.set(row.kind, already + 1);
+    return true;
+  };
+
+  for (const kind of ["finding", "method", "limit", "recommendation", "number"] as ClaimKind[]) {
+    const row = ranked.find((r) => r.kind === kind);
+    if (row) take(row);
+  }
+  for (const row of ranked) {
     if (chosen.length >= budget) break;
+    take(row);
   }
 
   chosen.sort((a, b) => {

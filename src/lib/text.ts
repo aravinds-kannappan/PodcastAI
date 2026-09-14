@@ -32,17 +32,24 @@ export function splitSentences(text: string): string[] {
   return cleaned
     .split(/(?<=[.!?])\s+(?=["A-Z0-9])/)
     .map((s) => s.trim())
-    .filter((s) => s.length >= 28 && !/^https?:/i.test(s));
+    .filter((s) => s.length >= 20 && !/^https?:/i.test(s));
 }
 
 export function detectTitle(text: string, fallback: string): string {
+  const subject = text.match(/^Subject:\s*(.+)$/mi);
+  if (subject?.[1]) return subject[1].trim();
+
+  const md = text.match(/^#\s+(.+)$/m);
+  if (md?.[1]) return md[1].trim();
+
   const lines = text
     .split(/\n+/)
     .map((l) => l.replace(/^#+\s*/, "").trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((l) => !/^(memo|to|from|date|subject)\b/i.test(l));
   const first = lines[0] ?? fallback;
-  if (first.length < 120 && first.length > 8 && !first.endsWith(".")) return first;
-  const heading = lines.find((l) => l.length < 90 && /^[A-Z]/.test(l) && !l.endsWith("."));
+  if (first.length < 120 && first.length > 12 && !first.endsWith(".")) return first;
+  const heading = lines.find((l) => l.length > 12 && l.length < 90 && /^[A-Z]/.test(l) && !l.endsWith("."));
   return heading ?? fallback.replace(/\.[a-z0-9]+$/i, "").replace(/[-_]/g, " ");
 }
 
@@ -76,7 +83,9 @@ export function sectionize(text: string): PaperSection[] {
   return sections.length ? sections : [{ heading: "Body", body: text }];
 }
 
-export function classifyKind(sentence: string): ClaimKind {
+export function classifyKind(sentence: string, section = ""): ClaimKind {
+  if (/limit|caveat/i.test(section)) return "limit";
+  if (/method|how we counted|procedure/i.test(section) && !FINDING.test(sentence)) return "method";
   if (LIMIT.test(sentence)) return "limit";
   if (METHOD.test(sentence)) return "method";
   if (FINDING.test(sentence)) return "finding";
@@ -102,7 +111,7 @@ export function scoreSentence(sentence: string, section: string, index: number):
   if (RECOMMEND.test(sentence)) score += 2;
   const len = sentence.length;
   if (len > 70 && len < 280) score += 2;
-  if (len < 40) score -= 3;
+  if (len < 40) score -= LIMIT.test(sentence) || /limit/i.test(section) ? 0 : 3;
   if (len > 420) score -= 2;
   if (/\b(doi:|copyright|all rights|http|www\.)/i.test(sentence)) score -= 8;
   if (/^references\b/i.test(section)) score -= 10;
