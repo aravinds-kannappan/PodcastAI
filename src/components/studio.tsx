@@ -6,9 +6,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { FileTray } from "@/components/file-tray";
 import { EpisodePlayer } from "@/components/episode-player";
+import { PipelineTrace } from "@/components/pipeline-trace";
 import { extractDocument } from "@/lib/extract";
-import { generatePodcast } from "@/lib/podcast";
-import type { ExtractedDoc, PodcastScript, UploadItem } from "@/lib/types";
+import { produceEpisode } from "@/lib/pipeline";
+import type { EpisodeResult, ExtractedDoc, PipelineStage, UploadItem } from "@/lib/types";
 
 const SAMPLES = [
   {
@@ -33,12 +34,14 @@ type Phase = "idle" | "loadingSamples" | "writing" | "ready";
 export function Studio() {
   const [items, setItems] = useState<UploadItem[]>([]);
   const [docs, setDocs] = useState<ExtractedDoc[]>([]);
-  const [script, setScript] = useState<PodcastScript | null>(null);
+  const [result, setResult] = useState<EpisodeResult | null>(null);
+  const [stage, setStage] = useState<PipelineStage | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
 
   const busy = phase === "writing" || phase === "loadingSamples";
   const readyCount = items.filter((i) => i.status === "ready").length;
+  const script = result?.script ?? null;
 
   async function makeEpisode(fromDocs = docs) {
     setError(null);
@@ -47,13 +50,16 @@ export function Studio() {
       return;
     }
     setPhase("writing");
-    await new Promise((r) => setTimeout(r, 280));
+    setStage("extract");
+    setResult(null);
     try {
-      const next = generatePodcast(fromDocs);
-      setScript(next);
+      const next = await produceEpisode(fromDocs, { onStage: setStage });
+      setResult(next);
+      setStage(null);
       setPhase("ready");
     } catch (err) {
-      setScript(null);
+      setResult(null);
+      setStage(null);
       setPhase("idle");
       setError(err instanceof Error ? err.message : "Could not write the episode.");
     }
@@ -62,7 +68,8 @@ export function Studio() {
   async function loadSamples() {
     setError(null);
     setPhase("loadingSamples");
-    setScript(null);
+    setResult(null);
+    setStage("extract");
     try {
       const files: File[] = [];
       for (const sample of SAMPLES) {
@@ -91,6 +98,7 @@ export function Studio() {
       await makeEpisode(extracted);
     } catch (err) {
       setPhase("idle");
+      setStage(null);
       setError(
         err instanceof Error
           ? err.message
@@ -112,12 +120,12 @@ export function Studio() {
                 PaperCast
               </p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
-                Paper to podcast, on the house
+                PaperModel to podcast, on the house
               </p>
             </div>
           </div>
-          <p className="hidden text-xs text-muted-foreground sm:block">
-            No accounts. No Speechify bill. Voices come from this browser.
+          <p className="hidden max-w-xs text-right text-xs text-muted-foreground sm:block">
+            Local only. Ollama optional at localhost:11434. Voices come from this browser.
           </p>
         </div>
       </header>
@@ -128,13 +136,13 @@ export function Studio() {
             Free listening booth
           </p>
           <h1 className="font-heading mt-2 text-3xl leading-[1.15] font-semibold tracking-tight text-balance sm:text-4xl">
-            Put a paper in. Get a two host show out.
+            Model the paper. Then write the show.
           </h1>
           <p className="mt-3 text-base leading-relaxed text-muted-foreground text-pretty">
-            PaperCast is a free local stand in for Speechify’s paper to podcast
-            trick. It extracts the text locally, writes a Maya and Jordan
-            conversation from the claims on the page, and reads it aloud with
-            the Web Speech API. No OpenAI, no cloud TTS, no keys.
+            PaperCast extracts a document in the browser, builds a PaperModel of
+            claims and evidence, plans the episode, writes Maya and Jordan from
+            that plan, then critiques and scores the result. It will not generate
+            dialogue from raw extracted sentences. No OpenAI, no cloud TTS, no keys.
           </p>
         </section>
 
@@ -145,7 +153,8 @@ export function Studio() {
               busy={busy}
               onChange={(next) => {
                 setItems(next);
-                setScript(null);
+                setResult(null);
+                setStage(null);
                 setPhase("idle");
               }}
               onExtracted={(next) => {
@@ -162,7 +171,7 @@ export function Studio() {
                 onClick={() => void makeEpisode()}
               >
                 {phase === "writing" ? <Loader2 className="animate-spin" /> : <Headphones />}
-                {phase === "writing" ? "Writing the episode…" : "Make episode"}
+                {phase === "writing" ? "Writing from the plan…" : "Make episode"}
               </Button>
               <Button
                 type="button"
@@ -180,15 +189,7 @@ export function Studio() {
               </Button>
             </div>
 
-            {phase === "writing" ? (
-              <Alert>
-                <AlertTitle>Marking up the claims</AlertTitle>
-                <AlertDescription>
-                  PaperCast is picking the important sentences and turning them
-                  into a conversation. No remote model in the loop.
-                </AlertDescription>
-              </Alert>
-            ) : null}
+            <PipelineTrace result={result} stage={stage} busy={busy} />
 
             {error ? (
               <Alert variant="destructive">
@@ -198,9 +199,9 @@ export function Studio() {
             ) : null}
 
             <p className="text-xs leading-relaxed text-muted-foreground">
-              The script is extractive: hosts quote and rephrase the document
-              instead of inventing citations. Good enough to listen while you
-              cook. Not a substitute for reading a paper you have to review.
+              If Ollama is running locally, PaperCast will try it for the script
+              and keep the pass only if critique still finds no extractive leak.
+              Otherwise the rule writer runs entirely in this tab.
             </p>
           </section>
 
@@ -211,7 +212,7 @@ export function Studio() {
                 script={script}
               />
             ) : (
-              <EmptyBooth loading={busy} />
+              <EmptyBooth loading={busy} stage={stage} />
             )}
           </section>
         </div>
@@ -220,17 +221,29 @@ export function Studio() {
   );
 }
 
-function EmptyBooth({ loading }: { loading: boolean }) {
+function EmptyBooth({
+  loading,
+  stage,
+}: {
+  loading: boolean;
+  stage: PipelineStage | null;
+}) {
   return (
     <div className="flex h-full min-h-80 flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/60 px-6 py-12 text-center">
       {loading ? (
         <>
           <Loader2 className="size-8 animate-spin text-primary" />
-          <p className="font-heading mt-4 text-lg font-semibold">
-            Warming up the booth
-          </p>
+          <p className="font-heading mt-4 text-lg font-semibold">Warming up the booth</p>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Reading files, then writing Maya and Jordan’s rundown.
+            {stage === "model"
+              ? "Turning the extracted paper into claims."
+              : stage === "plan"
+                ? "Planning beats from those claims."
+                : stage === "script"
+                  ? "Writing the conversation from the plan."
+                  : stage === "critique" || stage === "benchmark"
+                    ? "Scoring the episode before it hits the player."
+                    : "Reading files, then running the PaperModel loop."}
           </p>
         </>
       ) : (

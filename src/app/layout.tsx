@@ -20,7 +20,7 @@ const newsreader = Newsreader({
 export const metadata: Metadata = {
   title: "PaperCast: paper to podcast",
   description:
-    "Drop a PDF or notes file and get a two host podcast in the browser. Free, local, no API keys.",
+    "Drop a PDF or notes file and get a two-host podcast from a PaperModel, not a read-aloud. Free, local, no API keys. Ollama optional.",
 };
 
 export default function RootLayout({
