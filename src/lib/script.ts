@@ -1,5 +1,6 @@
 import { makeId } from "./text";
-import type { EpisodePlan, PaperModel, PlanBeat, PodcastScript, ScriptLine } from "./types";
+import type { EpisodeOptions, EpisodePlan, PaperModel, PlanBeat, PodcastScript, ScriptLine } from "./types";
+import { DEFAULT_EPISODE_OPTIONS } from "./types";
 
 function line(
   host: ScriptLine["host"],
@@ -26,7 +27,12 @@ function claimOf(model: PaperModel, id?: string) {
   return model.claims.find((c) => c.id === id);
 }
 
-function renderBeat(beat: PlanBeat, model: PaperModel, engineNote: string): ScriptLine[] {
+function renderBeat(
+  beat: PlanBeat,
+  model: PaperModel,
+  engineNote: string,
+  options: EpisodeOptions
+): ScriptLine[] {
   const claim = claimOf(model, beat.claimId);
   const quote = beat.quote;
   const extra = { beatId: beat.id, claimId: claim?.id, quote };
@@ -36,7 +42,11 @@ function renderBeat(beat: PlanBeat, model: PaperModel, engineNote: string): Scri
       return [
         line(
           "maya",
-          `You're listening to PaperCast. We don't read the file aloud. We extract it, build a PaperModel, plan the episode, then write this conversation. On the desk today: ${filesLine(model)}.`,
+          options.style === "fast-briefing"
+            ? `PaperCast, short pass. We modeled the file first. On the desk: ${filesLine(model)}.`
+            : options.style === "lecture"
+              ? `This is PaperCast. Jordan will walk a modeled reading of ${filesLine(model)}, then I'll interrupt when a listener would get lost.`
+              : `You're listening to PaperCast. We don't read the file aloud. We extract it, build a PaperModel, plan the episode, then write this conversation. On the desk today: ${filesLine(model)}.`,
           { beatId: beat.id }
         ),
         line(
@@ -48,10 +58,34 @@ function renderBeat(beat: PlanBeat, model: PaperModel, engineNote: string): Scri
         ),
       ];
     case "setup":
+      if (beat.purpose === "context") {
+        return [
+          line("maya", "Before the result, where does this paper sit? Don't read the introduction at me.", {
+            beatId: beat.id,
+          }),
+          line(
+            "jordan",
+            model.background[0] ??
+              model.researchQuestion ??
+              "The authors set up a comparison; I'm staying with that frame rather than a literature tour.",
+            { beatId: beat.id }
+          ),
+        ];
+      }
       return [
-        line("maya", "Give me the thesis in one breath. Not the abstract pasted back at me.", {
-          beatId: beat.id,
-        }),
+        line(
+          "maya",
+          options.audience === "executive"
+            ? "Skip the throat-clearing. What is the decision-relevant thesis?"
+            : options.audience === "student"
+              ? "If I'm taking notes, what's the one-sentence thesis I should write at the top of the page?"
+              : options.style === "reviewer"
+                ? "State the thesis as a claim a reviewer could falsify, not as a vibe."
+                : "Give me the thesis in one breath. Not the abstract pasted back at me.",
+          {
+            beatId: beat.id,
+          }
+        ),
         line("jordan", model.thesis, { beatId: beat.id }),
       ];
     case "bridge":
@@ -145,9 +179,10 @@ function minutesFromWords(words: number): number {
 export function writeScript(
   model: PaperModel,
   plan: EpisodePlan,
-  engineNote = "This booth used the rule writer because Ollama was not running."
+  engineNote = "This booth used the rule writer because Ollama was not running.",
+  options: EpisodeOptions = DEFAULT_EPISODE_OPTIONS
 ): PodcastScript {
-  const lines = plan.beats.flatMap((beat) => renderBeat(beat, model, engineNote));
+  const lines = plan.beats.flatMap((beat) => renderBeat(beat, model, engineNote, options));
   const wordCount = lines.reduce((n, l) => n + l.text.split(/\s+/).filter(Boolean).length, 0);
   return {
     showTitle: "PaperCast",

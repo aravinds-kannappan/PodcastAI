@@ -16,6 +16,8 @@ describe("EpisodePlan", () => {
       expect(beat.intent.length).toBeGreaterThan(10);
       expect(beat.talkingPoints.length).toBeGreaterThan(0);
     }
+    expect(plan.beats.some((b) => b.purpose === "hook")).toBe(true);
+    expect(plan.beats.some((b) => b.purpose === "thesis")).toBe(true);
     expect(plan.beats.some((b) => b.role === "cold-open")).toBe(true);
     expect(plan.beats.some((b) => b.role === "setup")).toBe(true);
     expect(plan.beats.some((b) => b.role === "takeaway")).toBe(true);

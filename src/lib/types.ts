@@ -38,9 +38,63 @@ export type ExtractedDoc = {
   wordCount: number;
 };
 
+export type EpisodeStyle =
+  | "thoughtful-talk"
+  | "lecture"
+  | "fast-briefing"
+  | "deep-dive"
+  | "reviewer";
+
+export type EpisodeLength = "short" | "medium" | "long";
+
+export type EpisodeAudience = "general" | "student" | "researcher" | "executive";
+
+export type EpisodeOptions = {
+  style: EpisodeStyle;
+  length: EpisodeLength;
+  audience: EpisodeAudience;
+};
+
+export const DEFAULT_EPISODE_OPTIONS: EpisodeOptions = {
+  style: "thoughtful-talk",
+  length: "medium",
+  audience: "general",
+};
+
+export const EPISODE_STYLE_LABELS: Record<EpisodeStyle, string> = {
+  "thoughtful-talk": "Thoughtful Talk",
+  lecture: "Lecture",
+  "fast-briefing": "Fast Briefing",
+  "deep-dive": "Deep Dive",
+  reviewer: "Reviewer Mode",
+};
+
+export const EPISODE_LENGTH_LABELS: Record<EpisodeLength, string> = {
+  short: "Short",
+  medium: "Medium",
+  long: "Long",
+};
+
+export const EPISODE_AUDIENCE_LABELS: Record<EpisodeAudience, string> = {
+  general: "General",
+  student: "Student",
+  researcher: "Researcher",
+  executive: "Executive",
+};
+
+export type SourceCoverage = {
+  section: string;
+  used: boolean;
+  reason?: string;
+};
+
 export type PaperSection = {
+  id: string;
   heading: string;
   body: string;
+  order: number;
+  pageStart?: number;
+  pageEnd?: number;
 };
 
 export type SourceSentence = {
@@ -70,24 +124,57 @@ export type ModelClaim = {
 export type PaperModel = {
   title: string;
   thesis: string;
+  oneSentenceThesis: string;
+  researchQuestion?: string;
+  background: string[];
+  method: string;
+  datasetOrSample?: string;
   authorsLine?: string;
   claims: ModelClaim[];
+  numericFindings: string[];
+  limitations: string[];
+  implications: string[];
+  confusingTerms: string[];
+  skepticalQuestions: string[];
+  sourceCoverage: SourceCoverage[];
   sourceNames: string[];
   wordCount: number;
 };
 
+export type BeatPurpose =
+  | "hook"
+  | "context"
+  | "thesis"
+  | "method"
+  | "finding"
+  | "evidence"
+  | "skepticism"
+  | "limitation"
+  | "implication"
+  | "recap";
+
 export type PlanBeat = {
   id: string;
   role: BeatRole;
+  purpose: BeatPurpose;
+  title: string;
+  goal: string;
   intent: string;
   claimId?: string;
+  claimIds: string[];
+  evidenceIds: string[];
+  listenerQuestion: string;
+  tone: "curious" | "careful" | "skeptical" | "excited" | "serious";
   talkingPoints: string[];
   quote?: string;
 };
 
 export type EpisodePlan = {
+  title: string;
   episodeTitle: string;
   logline: string;
+  style: EpisodeStyle;
+  targetDurationMinutes: number;
   beats: PlanBeat[];
   takeaways: string[];
 };
@@ -99,6 +186,14 @@ export type ScriptLine = {
   quote?: string;
   beatId?: string;
   claimId?: string;
+  evidenceIds?: string[];
+  performance?: {
+    pauseBeforeMs?: number;
+    emotion?: "neutral" | "curious" | "skeptical" | "warm" | "serious";
+    rate?: number;
+    pitch?: number;
+    emphasis?: string[];
+  };
 };
 
 export type PodcastScript = {
@@ -159,8 +254,66 @@ export type EpisodeResult = {
   script: PodcastScript;
   critique: CritiqueReport;
   benchmark: BenchmarkReport;
+  evaluation: BenchmarkResult;
   engine: EngineInfo;
+  options: EpisodeOptions;
 };
+
+export type ScriptIssueType =
+  | "repetition"
+  | "unsupported_claim"
+  | "missing_method"
+  | "missing_limitations"
+  | "robotic_phrase"
+  | "weak_transition"
+  | "too_extractive"
+  | "too_verbose";
+
+export type ScriptIssue = {
+  severity: "low" | "medium" | "high";
+  type: ScriptIssueType;
+  message: string;
+  lineIds?: string[];
+};
+
+export type ScriptScores = {
+  understanding: number;
+  sourceGrounding: number;
+  methodCoverage: number;
+  findingsCoverage: number;
+  limitationsCoverage: number;
+  nonRepetition: number;
+  conversationalQuality: number;
+  structure: number;
+  usefulness: number;
+  overall: number;
+};
+
+export type ScriptCritiqueResult = {
+  script: PodcastScript;
+  issues: ScriptIssue[];
+  scores: ScriptScores;
+};
+
+export type BenchmarkResult = {
+  id: string;
+  createdAt: string;
+  documentName: string;
+  generatorProvider: string;
+  judgeProvider: string;
+  judgeModel?: string;
+  options: EpisodeOptions;
+  scores: ScriptScores;
+  issues: ScriptIssue[];
+  summary: string;
+  recommendations: string[];
+  scriptWordCount: number;
+  repeatedPhrases: string[];
+  unsupportedClaims: string[];
+  missingCoverage: string[];
+};
+
+export type JudgeKind = "ollama" | "rules";
 
 export type UploadItem = {
   id: string;
@@ -171,8 +324,8 @@ export type UploadItem = {
 };
 
 export const HOSTS: Record<HostId, { name: string; role: string; short: string }> = {
-  maya: { name: "Maya Reed", role: "Host", short: "Maya" },
-  jordan: { name: "Jordan Hale", role: "Reader", short: "Jordan" },
+  maya: { name: "Maya Reed", role: "Curious host", short: "Maya" },
+  jordan: { name: "Jordan Hale", role: "Research explainer", short: "Jordan" },
 };
 
 export const PIPELINE_STAGES: { id: PipelineStage; label: string }[] = [

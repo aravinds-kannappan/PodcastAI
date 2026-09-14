@@ -176,6 +176,79 @@ function thesisFrom(claims: ModelClaim[], title: string): string {
   return `${title}: ${finding.text.replace(/\.$/, "")}.`;
 }
 
+function researchQuestionFrom(papers: ExtractedPaper[]): string | undefined {
+  for (const paper of papers) {
+    const hit = paper.sentences.find((s) =>
+      /\b(the question|we asked|research question|does |whether )\b/i.test(s.text)
+    );
+    if (hit) return hit.text.replace(/\s+/g, " ").trim();
+  }
+  return undefined;
+}
+
+function methodSummary(claims: ModelClaim[]): string {
+  const method = claims.find((c) => c.kind === "method");
+  return method?.text ?? "The paper describes a method, but the model did not extract a clean protocol sentence.";
+}
+
+function datasetFrom(claims: ModelClaim[]): string | undefined {
+  const method = claims.find((c) => c.kind === "method");
+  if (!method) return undefined;
+  const nums = method.numbers.slice(0, 3).join(", ");
+  return nums ? `${nums} in the reported sample or setup.` : undefined;
+}
+
+function confusingTermsFrom(papers: ExtractedPaper[]): string[] {
+  const terms: string[] = [];
+  const seen = new Set<string>();
+  for (const paper of papers) {
+    const matches = paper.text.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}\b/g) ?? [];
+    for (const raw of matches) {
+      const key = raw.toLowerCase();
+      if (seen.has(key) || raw.length < 8 || /^(the|this|from|subject|memo)/i.test(raw)) continue;
+      seen.add(key);
+      terms.push(raw);
+      if (terms.length >= 6) return terms;
+    }
+  }
+  return terms;
+}
+
+function coverageFrom(papers: ExtractedPaper[], claims: ModelClaim[]): PaperModel["sourceCoverage"] {
+  const usedHeadings = new Set(claims.map((c) => c.section.toLowerCase()));
+  const seen = new Set<string>();
+  const rows: PaperModel["sourceCoverage"] = [];
+  for (const paper of papers) {
+    for (const section of paper.sections) {
+      const key = section.heading.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const used = usedHeadings.has(key) || claims.some((c) => c.section.toLowerCase().includes(key.slice(0, 12)));
+      rows.push({
+        section: section.heading,
+        used,
+        reason: used ? "At least one modeled claim cites this stretch." : "No claim was taken from this section.",
+      });
+    }
+  }
+  return rows;
+}
+
+function skepticalQuestionsFrom(claims: ModelClaim[]): string[] {
+  const qs: string[] = [];
+  if (claims.some((c) => c.kind === "method")) {
+    qs.push("Is the counting rule strong enough to support the headline number?");
+  }
+  if (claims.some((c) => c.kind === "limit")) {
+    qs.push("What happens if a team unlike this sample tries the same move?");
+  }
+  if (claims.some((c) => c.kind === "finding")) {
+    qs.push("Is this a causal result or a comparison the authors cannot fully defend?");
+  }
+  if (!qs.length) qs.push("What would a skeptical reader still need to see?");
+  return qs.slice(0, 3);
+}
+
 export function buildPaperModel(papers: ExtractedPaper[]): PaperModel {
   if (!papers.length) {
     throw new Error("Add at least one document before generating a show.");
@@ -190,11 +263,26 @@ export function buildPaperModel(papers: ExtractedPaper[]): PaperModel {
   const title =
     papers.length === 1 ? papers[0].title : `${papers[0].title}, and ${papers.length - 1} more`;
   const authorsLine = papers.map((p) => detectAuthors(p.text)).find(Boolean);
+  const thesis = thesisFrom(claims, papers[0].title);
   return {
     title,
-    thesis: thesisFrom(claims, papers[0].title),
+    thesis,
+    oneSentenceThesis: thesis,
+    researchQuestion: researchQuestionFrom(papers),
+    background: claims.filter((c) => c.kind === "background").slice(0, 4).map((c) => c.text),
+    method: methodSummary(claims),
+    datasetOrSample: datasetFrom(claims),
     authorsLine,
     claims,
+    numericFindings: uniqueBy(
+      claims.flatMap((c) => c.numbers),
+      (n) => n.toLowerCase()
+    ).slice(0, 8),
+    limitations: claims.filter((c) => c.kind === "limit").map((c) => c.text),
+    implications: claims.filter((c) => c.kind === "recommendation").map((c) => c.text),
+    confusingTerms: confusingTermsFrom(papers),
+    skepticalQuestions: skepticalQuestionsFrom(claims),
+    sourceCoverage: coverageFrom(papers, claims),
     sourceNames: papers.map((p) => p.name),
     wordCount: papers.reduce((n, p) => n + p.wordCount, 0),
   };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { quietHourDoc } from "./fixtures";
+import { quietHourDoc, QUIET_HOUR_TEXT } from "./fixtures";
 import { LEAK_RUN, lineLeaks } from "./leak";
 import { buildPaperModel, toExtractedPaper } from "./paper-model";
 
@@ -22,6 +22,21 @@ describe("PaperModel", () => {
       expect(lineLeaks(claim.text, [claim.evidence], LEAK_RUN)).toBe(false);
     }
     expect(model.claims.some((c) => c.kind === "finding")).toBe(true);
-    expect(model.claims.some((c) => c.kind === "limit")).toBe(true);
+    expect(model.limitations.length).toBeGreaterThan(0);
+    expect(model.oneSentenceThesis).toBe(model.thesis);
+    expect(model.method.length).toBeGreaterThan(10);
+  });
+
+  it("still builds a model when the file has no academic headings", () => {
+    const blob = {
+      id: "blob",
+      name: "notes.txt",
+      kind: "text" as const,
+      text: QUIET_HOUR_TEXT,
+      wordCount: QUIET_HOUR_TEXT.split(/\s+/).length,
+    };
+    const fallback = buildPaperModel([toExtractedPaper(blob)]);
+    expect(fallback.claims.length).toBeGreaterThanOrEqual(2);
+    expect(fallback.sourceCoverage.length).toBeGreaterThan(0);
   });
 });

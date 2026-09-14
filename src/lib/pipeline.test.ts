@@ -19,6 +19,9 @@ describe("Pipeline", () => {
     expect(result.critique.passed).toBe(true);
     expect(result.benchmark.extractiveLeak).toBe(0);
     expect(result.engine.kind).toBe("rules");
+    expect(result.evaluation.judgeProvider).toBe("rules");
+    expect(result.evaluation.scores.overall).toBeGreaterThanOrEqual(0);
+    expect(result.options.style).toBe("thoughtful-talk");
     const sources = result.papers.flatMap((p) => p.sentences.map((s) => s.text));
     for (const row of result.script.lines) {
       expect(lineLeaks(row.text, sources, LEAK_RUN)).toBe(false);
@@ -48,6 +51,7 @@ describe("Ollama", () => {
   it("picks a preferred local model name", async () => {
     const { pickOllamaModel } = await import("./ollama");
     expect(pickOllamaModel(["phi3:latest", "llama3.2:latest"])).toBe("llama3.2:latest");
+    expect(pickOllamaModel(["mistral", "llama3.1:latest"])).toBe("llama3.1:latest");
     expect(pickOllamaModel([])).toBeUndefined();
   });
 });

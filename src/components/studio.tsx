@@ -1,222 +1,172 @@
 "use client";
 
-import { useState } from "react";
-import { Headphones, Loader2, Radio, Sparkles } from "lucide-react";
+import { Headphones, Loader2, Sparkles } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { FileTray } from "@/components/file-tray";
 import { EpisodePlayer } from "@/components/episode-player";
 import { PipelineTrace } from "@/components/pipeline-trace";
-import { extractDocument } from "@/lib/extract";
-import { produceEpisode } from "@/lib/pipeline";
-import type { EpisodeResult, ExtractedDoc, PipelineStage, UploadItem } from "@/lib/types";
-
-const SAMPLES = [
-  {
-    path: "/samples/CivicAttention.pdf",
-    name: "CivicAttention.pdf",
-    type: "application/pdf",
-  },
-  {
-    path: "/samples/SourdoughNotes.md",
-    name: "SourdoughNotes.md",
-    type: "text/markdown",
-  },
-  {
-    path: "/samples/QuietHourMemo.txt",
-    name: "QuietHourMemo.txt",
-    type: "text/plain",
-  },
-];
+import { EpisodeBriefing } from "@/components/episode-briefing";
+import { ChoiceRow } from "@/components/choice-row";
+import { LocalModelStatus, type OllamaUiStatus } from "@/components/local-model-status";
+import type {
+  EpisodeAudience,
+  EpisodeLength,
+  EpisodeOptions,
+  EpisodeResult,
+  EpisodeStyle,
+  ExtractedDoc,
+  PipelineStage,
+  UploadItem,
+} from "@/lib/types";
+import {
+  EPISODE_AUDIENCE_LABELS,
+  EPISODE_LENGTH_LABELS,
+  EPISODE_STYLE_LABELS,
+} from "@/lib/types";
 
 type Phase = "idle" | "loadingSamples" | "writing" | "ready";
 
-export function Studio() {
-  const [items, setItems] = useState<UploadItem[]>([]);
-  const [docs, setDocs] = useState<ExtractedDoc[]>([]);
-  const [result, setResult] = useState<EpisodeResult | null>(null);
-  const [stage, setStage] = useState<PipelineStage | null>(null);
-  const [phase, setPhase] = useState<Phase>("idle");
-  const [error, setError] = useState<string | null>(null);
-
+export function Studio({
+  items,
+  result,
+  stage,
+  phase,
+  error,
+  options,
+  ollama,
+  reasoningLabel,
+  voiceLabel,
+  onItems,
+  onDocs,
+  onMakeEpisode,
+  onLoadSamples,
+  onOptions,
+}: {
+  items: UploadItem[];
+  result: EpisodeResult | null;
+  stage: PipelineStage | null;
+  phase: Phase;
+  error: string | null;
+  options: EpisodeOptions;
+  ollama: OllamaUiStatus;
+  reasoningLabel: "ollama" | "rules" | "auto";
+  voiceLabel: string;
+  onItems: (items: UploadItem[]) => void;
+  onDocs: (docs: ExtractedDoc[]) => void;
+  onMakeEpisode: () => void;
+  onLoadSamples: () => void;
+  onOptions: (options: EpisodeOptions) => void;
+}) {
   const busy = phase === "writing" || phase === "loadingSamples";
   const readyCount = items.filter((i) => i.status === "ready").length;
   const script = result?.script ?? null;
 
-  async function makeEpisode(fromDocs = docs) {
-    setError(null);
-    if (!fromDocs.length) {
-      setError("Add a readable file first. PDF, Markdown, or plain text is enough.");
-      return;
-    }
-    setPhase("writing");
-    setStage("extract");
-    setResult(null);
-    try {
-      const next = await produceEpisode(fromDocs, { onStage: setStage });
-      setResult(next);
-      setStage(null);
-      setPhase("ready");
-    } catch (err) {
-      setResult(null);
-      setStage(null);
-      setPhase("idle");
-      setError(err instanceof Error ? err.message : "Could not write the episode.");
-    }
-  }
-
-  async function loadSamples() {
-    setError(null);
-    setPhase("loadingSamples");
-    setResult(null);
-    setStage("extract");
-    try {
-      const files: File[] = [];
-      for (const sample of SAMPLES) {
-        const res = await fetch(sample.path);
-        if (!res.ok) throw new Error(`Missing sample ${sample.name}`);
-        const blob = await res.blob();
-        files.push(new File([blob], sample.name, { type: sample.type }));
-      }
-      const uploads: UploadItem[] = files.map((file) => ({
-        id: globalThis.crypto.randomUUID(),
-        file,
-        status: "queued",
-      }));
-      setItems(uploads);
-      const extracted: ExtractedDoc[] = [];
-      const working = [...uploads];
-      for (let i = 0; i < working.length; i++) {
-        working[i] = { ...working[i], status: "reading" };
-        setItems([...working]);
-        const doc = await extractDocument(working[i].file, working[i].id);
-        working[i] = { ...working[i], status: "ready", doc };
-        extracted.push(doc);
-        setItems([...working]);
-      }
-      setDocs(extracted);
-      await makeEpisode(extracted);
-    } catch (err) {
-      setPhase("idle");
-      setStage(null);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Could not load the sample stack. Try uploading your own files."
-      );
-    }
-  }
-
   return (
-    <div className="flex min-h-full flex-1 flex-col">
-      <header className="border-b border-border/80 bg-card/70 backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2.5">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-              <Radio className="size-4" />
-            </span>
-            <div>
-              <p className="font-heading text-base leading-none font-semibold tracking-tight">
-                PaperCast
-              </p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
-                PaperModel to podcast, on the house
-              </p>
-            </div>
-          </div>
-          <p className="hidden max-w-xs text-right text-xs text-muted-foreground sm:block">
-            Local only. Ollama optional at localhost:11434. Voices come from this browser.
-          </p>
-        </div>
-      </header>
+    <div className="flex flex-col gap-8">
+      <section className="max-w-2xl">
+        <p className="text-xs font-medium tracking-[0.2em] text-primary uppercase">Free listening booth</p>
+        <h1 className="font-heading mt-2 text-3xl leading-[1.15] font-semibold tracking-tight text-balance sm:text-4xl">
+          Model the paper. Then write the show.
+        </h1>
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground text-pretty">
+          PaperCast extracts a document in the browser, builds a PaperModel of claims and evidence,
+          plans the episode, writes Maya and Jordan from that plan, then critiques and scores the
+          result. It will not generate dialogue from raw extracted sentences. No OpenAI, no cloud
+          TTS, no keys.
+        </p>
+      </section>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-6 sm:px-6 sm:py-10">
-        <section className="max-w-2xl">
-          <p className="text-xs font-medium tracking-[0.2em] text-primary uppercase">
-            Free listening booth
-          </p>
-          <h1 className="font-heading mt-2 text-3xl leading-[1.15] font-semibold tracking-tight text-balance sm:text-4xl">
-            Model the paper. Then write the show.
-          </h1>
-          <p className="mt-3 text-base leading-relaxed text-muted-foreground text-pretty">
-            PaperCast extracts a document in the browser, builds a PaperModel of
-            claims and evidence, plans the episode, writes Maya and Jordan from
-            that plan, then critiques and scores the result. It will not generate
-            dialogue from raw extracted sentences. No OpenAI, no cloud TTS, no keys.
+      <LocalModelStatus ollama={ollama} reasoning={reasoningLabel} voice={voiceLabel} />
+
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.15fr)]">
+        <section className="flex flex-col gap-4">
+          <FileTray
+            items={items}
+            busy={busy}
+            onChange={(next) => onItems(next)}
+            onExtracted={onDocs}
+          />
+
+          <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
+            <ChoiceRow
+              label="Style"
+              value={options.style}
+              disabled={busy}
+              onChange={(style: EpisodeStyle) => onOptions({ ...options, style })}
+              options={(Object.keys(EPISODE_STYLE_LABELS) as EpisodeStyle[]).map((id) => ({
+                id,
+                label: EPISODE_STYLE_LABELS[id],
+              }))}
+            />
+            <ChoiceRow
+              label="Length"
+              value={options.length}
+              disabled={busy}
+              onChange={(length: EpisodeLength) => onOptions({ ...options, length })}
+              options={(Object.keys(EPISODE_LENGTH_LABELS) as EpisodeLength[]).map((id) => ({
+                id,
+                label: EPISODE_LENGTH_LABELS[id],
+              }))}
+            />
+            <ChoiceRow
+              label="Audience"
+              value={options.audience}
+              disabled={busy}
+              onChange={(audience: EpisodeAudience) => onOptions({ ...options, audience })}
+              options={(Object.keys(EPISODE_AUDIENCE_LABELS) as EpisodeAudience[]).map((id) => ({
+                id,
+                label: EPISODE_AUDIENCE_LABELS[id],
+              }))}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              type="button"
+              size="lg"
+              className="flex-1"
+              disabled={busy || readyCount === 0}
+              onClick={onMakeEpisode}
+            >
+              {phase === "writing" ? <Loader2 className="animate-spin" /> : <Headphones />}
+              {phase === "writing" ? "Writing from the plan…" : "Make episode"}
+            </Button>
+            <Button type="button" size="lg" variant="outline" disabled={busy} onClick={onLoadSamples}>
+              {phase === "loadingSamples" ? <Loader2 className="animate-spin" /> : <Sparkles />}
+              Load sample stack
+            </Button>
+          </div>
+
+          <PipelineTrace result={result} stage={stage} busy={busy} />
+
+          {error ? (
+            <Alert variant="destructive">
+              <AlertTitle>The booth stalled</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
+
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            If Ollama is running locally, PaperCast will try it for the script and keep the pass only
+            if critique still finds no extractive leak. Otherwise the rule writer runs entirely in
+            this tab. Open Benchmark to score the same loop with an Ollama or rule-based judge.
           </p>
         </section>
 
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.15fr)]">
-          <section className="flex flex-col gap-4">
-            <FileTray
-              items={items}
-              busy={busy}
-              onChange={(next) => {
-                setItems(next);
-                setResult(null);
-                setStage(null);
-                setPhase("idle");
-              }}
-              onExtracted={(next) => {
-                setDocs(next);
-              }}
+        <section className="min-h-80">
+          {script && phase === "ready" && result ? (
+            <EpisodeBriefing
+              result={result}
+              scriptSlot={
+                <EpisodePlayer key={`${script.episodeTitle}-${script.wordCount}`} script={script} />
+              }
             />
-
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button
-                type="button"
-                size="lg"
-                className="flex-1"
-                disabled={busy || readyCount === 0}
-                onClick={() => void makeEpisode()}
-              >
-                {phase === "writing" ? <Loader2 className="animate-spin" /> : <Headphones />}
-                {phase === "writing" ? "Writing from the plan…" : "Make episode"}
-              </Button>
-              <Button
-                type="button"
-                size="lg"
-                variant="outline"
-                disabled={busy}
-                onClick={() => void loadSamples()}
-              >
-                {phase === "loadingSamples" ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <Sparkles />
-                )}
-                Load sample stack
-              </Button>
-            </div>
-
-            <PipelineTrace result={result} stage={stage} busy={busy} />
-
-            {error ? (
-              <Alert variant="destructive">
-                <AlertTitle>The booth stalled</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            ) : null}
-
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              If Ollama is running locally, PaperCast will try it for the script
-              and keep the pass only if critique still finds no extractive leak.
-              Otherwise the rule writer runs entirely in this tab.
-            </p>
-          </section>
-
-          <section className="min-h-80">
-            {script && phase === "ready" ? (
-              <EpisodePlayer
-                key={`${script.episodeTitle}-${script.wordCount}`}
-                script={script}
-              />
-            ) : (
-              <EmptyBooth loading={busy} stage={stage} />
-            )}
-          </section>
-        </div>
-      </main>
+          ) : (
+            <EmptyBooth loading={busy} stage={stage} />
+          )}
+        </section>
+      </div>
     </div>
   );
 }
@@ -253,8 +203,8 @@ function EmptyBooth({
           </span>
           <p className="font-heading mt-4 text-lg font-semibold">No episode yet</p>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Drop a paper, or load the sample stack (a research PDF plus two
-            kitchen science notes), then press Make episode.
+            Drop a paper, pick a style, or load the sample stack, then press Make episode. After it
+            writes, switch among script, takeaways, claims, evidence, and limitations.
           </p>
         </>
       )}

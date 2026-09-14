@@ -1,0 +1,1 @@
+export { writeScript } from "./script";

@@ -63,24 +63,76 @@ export function detectAuthors(text: string): string | undefined {
   return undefined;
 }
 
-export function sectionize(text: string): PaperSection[] {
-  const parts = text.split(
-    /\n(?=(?:#{1,3}\s+|[A-Z][A-Z ]{8,}|Abstract|Introduction|Methods?|Results?|Discussion|Conclusion|Limitations|References|Takeaway|What changed|Numbers|Recommendation|Subject:)\b)/i
+const NAMED_SECTIONS = [
+  "abstract",
+  "introduction",
+  "related work",
+  "background",
+  "methods",
+  "method",
+  "materials and methods",
+  "experiments",
+  "results",
+  "findings",
+  "discussion",
+  "limitations",
+  "conclusion",
+  "references",
+];
+
+export function normalizeSectionHeading(heading: string): string {
+  const lower = heading.replace(/^#+\s*/, "").trim().toLowerCase();
+  const hit = NAMED_SECTIONS.find(
+    (name) => lower === name || lower.startsWith(`${name}:`) || lower.startsWith(`${name} `)
   );
-  const sections: PaperSection[] = [];
-  for (const part of parts) {
-    const trimmed = part.trim();
-    const nl = trimmed.indexOf("\n");
-    if (nl > 0 && nl < 90) {
-      sections.push({
-        heading: trimmed.slice(0, nl).replace(/^#+\s*/, "").trim(),
-        body: trimmed.slice(nl + 1),
-      });
+  if (hit) return hit.replace(/\b\w/g, (c) => c.toUpperCase());
+  return heading.replace(/^#+\s*/, "").trim() || "Body";
+}
+
+export function isSectionHeading(line: string): boolean {
+  const t = line.replace(/^#+\s*/, "").trim();
+  if (!t || t.length > 88) return false;
+  if (/^[A-Z][A-Z0-9 ,&/:-]{7,}$/.test(t) && !/[.!?]$/.test(t)) return true;
+  if (/^Subject:\s+\S/i.test(t)) return true;
+  return /^(Abstract|Introduction|Related work|Background|Methods?|Materials and methods|Experiments?|Results?|Findings|Discussion|Limitations?|Conclusion|References|Takeaway|What changed|Numbers|Recommendation)\s*:?\s*$/i.test(
+    t
+  );
+}
+
+export function sectionize(text: string): PaperSection[] {
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  const chunks: { heading: string; bodyLines: string[] }[] = [];
+  let current = { heading: "Body", bodyLines: [] as string[] };
+
+  const push = () => {
+    if (!current.bodyLines.some((l) => l.trim()) && current.heading === "Body") return;
+    chunks.push({ heading: current.heading, bodyLines: [...current.bodyLines] });
+  };
+
+  for (const raw of lines) {
+    if (isSectionHeading(raw)) {
+      if (current.heading === "Body" && !current.bodyLines.some((l) => l.trim())) {
+        current = { heading: normalizeSectionHeading(raw), bodyLines: [] };
+      } else {
+        push();
+        current = { heading: normalizeSectionHeading(raw), bodyLines: [] };
+      }
     } else {
-      sections.push({ heading: "Body", body: trimmed });
+      current.bodyLines.push(raw);
     }
   }
-  return sections.length ? sections : [{ heading: "Body", body: text }];
+  push();
+
+  const sections: PaperSection[] = chunks
+    .map((chunk, order) => ({
+      id: makeId("sec"),
+      heading: chunk.heading,
+      body: chunk.bodyLines.join("\n").trim(),
+      order,
+    }))
+    .filter((s) => s.body.length > 0 || s.heading !== "Body");
+
+  return sections.length ? sections : [{ id: makeId("sec"), heading: "Body", body: text, order: 0 }];
 }
 
 export function classifyKind(sentence: string, section = ""): ClaimKind {

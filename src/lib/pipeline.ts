@@ -1,4 +1,5 @@
 import { benchmarkEpisode } from "./benchmark";
+import { judgeEpisode } from "./benchmark/judge";
 import { critiqueEpisode, repairScript, sourceSentencesFrom } from "./critique";
 import { planEpisode } from "./episode-plan";
 import { makeId } from "./text";
@@ -14,18 +15,25 @@ import { buildPaperModel, toExtractedPaper } from "./paper-model";
 import { writeScript } from "./script";
 import type {
   EngineInfo,
+  EpisodeOptions,
   EpisodeResult,
   ExtractedDoc,
+  JudgeKind,
   PipelineStage,
   PodcastScript,
   ScriptLine,
 } from "./types";
+import { DEFAULT_EPISODE_OPTIONS } from "./types";
 
 export type ProduceOptions = {
   forceRules?: boolean;
   fetchImpl?: typeof fetch;
   ollamaBaseUrl?: string;
   onStage?: (stage: PipelineStage) => void;
+  episode?: EpisodeOptions;
+  preferredModel?: string;
+  judge?: JudgeKind;
+  judgeModel?: string;
 };
 
 function engineFrom(status: OllamaStatus, usedOllama: boolean): EngineInfo {
@@ -51,23 +59,37 @@ function engineFrom(status: OllamaStatus, usedOllama: boolean): EngineInfo {
 
 async function probeEngine(options: ProduceOptions): Promise<OllamaStatus> {
   if (options.forceRules) {
-    return { available: false, reason: "Ollama skipped (forceRules)." };
+    return { available: false, reason: "Ollama skipped (forceRules).", models: [] };
   }
   if (options.fetchImpl || options.ollamaBaseUrl) {
     return probeOllama({
       fetchImpl: options.fetchImpl,
       baseUrl: options.ollamaBaseUrl,
+      preferredModel: options.preferredModel,
     });
   }
   if (typeof window !== "undefined") {
     try {
-      const res = await fetch("/api/ollama", { cache: "no-store" });
-      return (await res.json()) as OllamaStatus;
+      const res = await fetch("/api/ollama/tags", { cache: "no-store" });
+      const body = (await res.json()) as {
+        available?: boolean;
+        model?: string;
+        models?: string[];
+        reason?: string;
+      };
+      if (body.available && body.model) {
+        return { available: true, model: body.model, models: body.models ?? [] };
+      }
+      return {
+        available: false,
+        reason: body.reason ?? "Ollama is not running at localhost:11434.",
+        models: body.models ?? [],
+      };
     } catch {
-      return { available: false, reason: "Ollama is not running at localhost:11434." };
+      return { available: false, reason: "Ollama is not running at localhost:11434.", models: [] };
     }
   }
-  return probeOllama();
+  return probeOllama({ preferredModel: options.preferredModel });
 }
 
 async function llmScriptLines(
@@ -78,10 +100,13 @@ async function llmScriptLines(
   if (!status.available) return null;
   if (typeof window !== "undefined" && !options.fetchImpl && !options.ollamaBaseUrl) {
     try {
-      const res = await fetch("/api/ollama", {
+      const res = await fetch("/api/ollama/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: buildScriptPrompt(input) }),
+        body: JSON.stringify({
+          prompt: buildScriptPrompt(input),
+          model: options.preferredModel ?? status.model,
+        }),
       });
       if (!res.ok) return null;
       const body = (await res.json()) as { json?: { lines?: LlmScriptLine[] } };
@@ -119,6 +144,7 @@ export async function produceEpisode(
   options: ProduceOptions = {}
 ): Promise<EpisodeResult> {
   const notify = (stage: PipelineStage) => options.onStage?.(stage);
+  const episode = options.episode ?? DEFAULT_EPISODE_OPTIONS;
 
   notify("extract");
   const papers = docs.map(toExtractedPaper);
@@ -128,7 +154,7 @@ export async function produceEpisode(
   const model = buildPaperModel(papers);
 
   notify("plan");
-  const plan = planEpisode(model);
+  const plan = planEpisode(model, episode);
 
   const status = await probeEngine(options);
 
@@ -137,14 +163,14 @@ export async function produceEpisode(
     status.available && status.model
       ? `Ollama (${status.model}) is on this machine, but this pass used the rule writer.`
       : "This booth used the rule writer because Ollama was not running.";
-  let script = writeScript(model, plan, ruleNote);
+  let script = writeScript(model, plan, ruleNote, episode);
   let usedOllama = false;
 
   if (status.available) {
     const llmLines = await llmScriptLines(
       status,
       {
-        modelName: status.model,
+        modelName: options.preferredModel ?? status.model,
         thesis: model.thesis,
         beats: plan.beats,
         claims: model.claims.map((c) => ({
@@ -192,6 +218,19 @@ export async function produceEpisode(
 
   notify("benchmark");
   const benchmark = benchmarkEpisode(model, plan, script, sourceSentences, engine.kind);
+  const evaluation = await judgeEpisode({
+    model,
+    plan,
+    script,
+    sourceSentences,
+    options: episode,
+    documentName: papers.map((p) => p.name).join(", "),
+    generatorProvider: engine.kind,
+    judge: options.judge ?? "rules",
+    judgeModel: options.judgeModel ?? options.preferredModel,
+    fetchImpl: options.fetchImpl,
+    baseUrl: options.ollamaBaseUrl,
+  });
 
-  return { papers, model, plan, script, critique, benchmark, engine };
+  return { papers, model, plan, script, critique, benchmark, evaluation, engine, options: episode };
 }

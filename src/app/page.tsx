@@ -1,5 +1,5 @@
-import { Studio } from "@/components/studio";
+import { AppShell } from "@/components/app-shell";
 
 export default function Home() {
-  return <Studio />;
+  return <AppShell />;
 }
