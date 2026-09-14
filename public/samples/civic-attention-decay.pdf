@@ -1,0 +1,349 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [9 0 R 10 0 R 11 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Times-Italic >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Times-Bold >>
+endobj
+6 0 obj
+<< /Length 3476 >>
+stream
+BT
+72 720 Td
+/F2 9 Tf
+(Working paper  --  14 March 2026  --  Not for journal submission) Tj
+0 -10 Td
+/F3 16 Tf
+(Civic Attention Decay: Notification) Tj
+0 -18 Td
+(Density and Recall in Knowledge Work) Tj
+0 -18 Td
+/F1 11 Tf
+( ) Tj
+0 -8 Td
+/F2 10 Tf
+(Elena Voss, Priya Raman, and Jonah Hale  ·  Civic Systems Lab) Tj
+0 -14 Td
+/F1 11 Tf
+( ) Tj
+0 -10 Td
+( ) Tj
+0 -12 Td
+/F3 13 Tf
+(Abstract) Tj
+0 -16 Td
+/F1 11 Tf
+(Knowledge workers now swim in notification density that would have looked like a paging) Tj
+0 -13 Td
+(storm a decade ago. We asked whether that density predicts what people can actually recall) Tj
+0 -13 Td
+(from documents they were supposed to have read. Across 312 remote employees in twelve firms,) Tj
+0 -13 Td
+(we found that each additional ten non-urgent notifications per hour during a reading block) Tj
+0 -13 Td
+(was associated with an 18 percent drop in delayed recall of the assigned paper. The effect) Tj
+0 -13 Td
+(held after we accounted for sleep, role seniority, and self-reported interest in the topic.) Tj
+0 -13 Td
+(A protected quiet hour cut notification density by 72 percent and recovered most of the lost) Tj
+0 -13 Td
+(recall. We argue that civic and workplace reading is failing less because people are lazy) Tj
+0 -13 Td
+(and more because the channel is too loud. Limitations include a convenience sample and a) Tj
+0 -13 Td
+(two-week window. Still, the practical claim is blunt: if you want people to remember a) Tj
+0 -13 Td
+(paper, stop tapping them while they read it.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+( ) Tj
+0 -12 Td
+/F3 13 Tf
+(1. Introduction) Tj
+0 -16 Td
+/F1 11 Tf
+(Organizations still assign papers. They still hold briefings. They still ask staff to come) Tj
+0 -13 Td
+(back next week having understood a 30-page PDF. Meanwhile the same staff keep Slack, mail,) Tj
+0 -13 Td
+(and calendar banners alive on the same screen. This paper treats that collision as a) Tj
+0 -13 Td
+(measurement problem rather than a sermon about willpower.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+(We use the phrase civic attention decay for a simple pattern: as interruptive cues rise, the) Tj
+0 -13 Td
+(share of a document that can be recalled a few hours later falls, even when people report) Tj
+0 -13 Td
+(that they finished the file. The civic part matters. City staff, newsroom reporters, and) Tj
+0 -13 Td
+(nonprofit analysts are often the people asked to read long public documents under the worst) Tj
+0 -13 Td
+(notification climates.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+(Prior work on task switching shows costs in the range of several hundred milliseconds per) Tj
+0 -13 Td
+(switch, which sounds small until it is multiplied by a hundred pings. Our contribution is) Tj
+0 -13 Td
+(not another lab task with colored shapes. We handed people real documents, counted real) Tj
+0 -13 Td
+(workplace notifications, and then quizzed them on claims that actually appeared in the text.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+( ) Tj
+0 -12 Td
+/F3 13 Tf
+(2. Methods) Tj
+0 -16 Td
+/F1 11 Tf
+(We recruited 312 knowledge workers through professional networks in public agencies,) Tj
+0 -13 Td
+(newsrooms, and software firms. Median age was 34. Fifty-four percent identified as women.) Tj
+0 -13 Td
+(Participants were not paid beyond a summary of their own team's results.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+(Each person received a 2,400-word briefing paper on congestion pricing, chosen because it is) Tj
+0 -13 Td
+(dense, civic, and unfamiliar to most private-sector staff. They had 40 minutes to read it on) Tj
+0 -13 Td
+ET
+endstream
+endobj
+7 0 obj
+<< /Length 3356 >>
+stream
+BT
+72 720 Td
+/F1 11 Tf
+(their ordinary work laptop. We did not block applications. We asked them to work as they) Tj
+0 -13 Td
+(normally would.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+(Notification density was measured from OS-level notification logs that participants exported) Tj
+0 -13 Td
+(themselves, plus Slack analytics where available. We counted banners, sounds, and badge) Tj
+0 -13 Td
+(bumps that occurred during the 40-minute reading window. We excluded notifications the) Tj
+0 -13 Td
+(participant had explicitly classified as urgent in a pre-survey, so a page from a child's) Tj
+0 -13 Td
+(school still counted as urgent and was removed from the density score.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+(Recall was a 16-item short-answer quiz administered four hours later. Items were drawn from) Tj
+0 -13 Td
+(the briefing: three numbers, five named mechanisms, four caveats, and four who-said-what) Tj
+0 -13 Td
+(attributions. Two raters scored answers against a rubric. Agreement was high \(Cohen's kappa) Tj
+0 -13 Td
+(= 0.84\).) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+(In week two, six of the twelve firms ran a quiet hour: 90 minutes of calendar-busy time with) Tj
+0 -13 Td
+(Slack set to notifications-off except for a named emergency channel. The other six firms) Tj
+0 -13 Td
+(were waitlisted. Assignment was at the firm level, not the person level, which we treat as a) Tj
+0 -13 Td
+(limitation rather than a feature.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+( ) Tj
+0 -12 Td
+/F3 13 Tf
+(3. Results) Tj
+0 -16 Td
+/F1 11 Tf
+(Mean notification density during the reading block was 9.6 events per hour in week one) Tj
+0 -13 Td
+(\(standard deviation 6.1\). The distribution had a long right tail; a software support pod) Tj
+0 -13 Td
+(averaged 22 events per hour.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+(We found that delayed recall fell as density rose. In a linear model with controls for sleep) Tj
+0 -13 Td
+(duration, seniority, and topic interest, ten extra non-urgent notifications per hour) Tj
+0 -13 Td
+(predicted an 18 percent relative drop in quiz score \(95 percent interval 12 to 24 percent\).) Tj
+0 -13 Td
+(People in the top density quartile recalled 41 percent of items. People in the bottom) Tj
+0 -13 Td
+(quartile recalled 63 percent.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+(Numbers were hit hardest. Participants could still paraphrase the political argument after a) Tj
+0 -13 Td
+(noisy reading session, but they lost the figures: the $4.50 toll, the 14 percent traffic) Tj
+0 -13 Td
+(drop in the cited pilot, the three exemptions. That pattern is consistent with a story about) Tj
+0 -13 Td
+(interrupted encoding of specifics rather than a story about total disengagement.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+(The quiet hour cut measured density by 72 percent on average. Quiz scores in quiet-hour) Tj
+0 -13 Td
+(firms rose 11 points on a 100-point scale relative to their own week-one baseline, while) Tj
+0 -13 Td
+(waitlisted firms moved less than two points. We cannot call this a fully randomized field) Tj
+0 -13 Td
+(experiment, but the before-after contrast is hard to ignore.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+(Self-report lied in a familiar way. Eighty-one percent of high-density readers said they had) Tj
+0 -13 Td
+(read the paper carefully. Their quiz scores said otherwise. Managers who glanced at presence) Tj
+0 -13 Td
+(indicators would have concluded the work was done.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+( ) Tj
+0 -12 Td
+ET
+endstream
+endobj
+8 0 obj
+<< /Length 2743 >>
+stream
+BT
+72 720 Td
+/F3 13 Tf
+(4. Discussion) Tj
+0 -16 Td
+/F1 11 Tf
+(The practical implication is unfashionable. Tool vendors sell summarizers and text-to-speech) Tj
+0 -13 Td
+(so that people can consume papers while remaining interruptible. That may help with) Tj
+0 -13 Td
+(exposure. It does not obviously help with recall of the parts of a document that are easy to) Tj
+0 -13 Td
+(lose: numbers, caveats, and who claimed what.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+(If an agency needs staff to remember a consultation paper, the cheaper intervention is) Tj
+0 -13 Td
+(calendar hygiene, not another listening app. A two-host podcast of a document can still be) Tj
+0 -13 Td
+(useful as a first pass. It should not be confused with encoding the source. We say that as) Tj
+0 -13 Td
+(researchers who also listen to papers while cooking.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+(Civic attention decay is not a metaphor about decadence. It is a measured relationship) Tj
+0 -13 Td
+(between channel noise and memory for public documents. Cities that email 40-page PDFs into a) Tj
+0 -13 Td
+(Slack culture should expect the quiz scores we saw.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+( ) Tj
+0 -12 Td
+/F3 13 Tf
+(5. Limitations) Tj
+0 -16 Td
+/F1 11 Tf
+(This sample is convenient, not civic in the strict sense: we have more software firms than) Tj
+0 -13 Td
+(planning departments. The reading task used one document. Two weeks is a short window.) Tj
+0 -13 Td
+(Firm-level assignment of the quiet hour means we cannot separate the policy from the kind of) Tj
+0 -13 Td
+(firm willing to try it. We did not observe what people did with the recovered minutes; some) Tj
+0 -13 Td
+(of them certainly opened another tab.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+(We also cannot see notifications that never hit the OS log, such as a colleague waving on a) Tj
+0 -13 Td
+(video call. Our density measure is a lower bound. If anything, the true association is) Tj
+0 -13 Td
+(steeper.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+( ) Tj
+0 -12 Td
+/F3 13 Tf
+(6. Conclusion) Tj
+0 -16 Td
+/F1 11 Tf
+(We conclude that notification density is a first-order predictor of whether a workplace) Tj
+0 -13 Td
+(paper is remembered. A quiet hour is a blunt, free intervention that recovered a large share) Tj
+0 -13 Td
+(of lost recall in this sample. If you are going to assign a document, assign the silence it) Tj
+0 -13 Td
+(needs.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+(Future work should test the same design on actual city staff reading zoning packets, and) Tj
+0 -13 Td
+(should ask whether audio walkthroughs of a paper help or merely create an illusion of) Tj
+0 -13 Td
+(coverage. Until then, the sentence we want repeated is this: interruption frequency predicts) Tj
+0 -13 Td
+(afternoon recall better than hours spent with the file open.) Tj
+0 -13 Td
+( ) Tj
+0 -8 Td
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 6 0 R >>
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 7 0 R >>
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 8 0 R >>
+endobj
+xref
+0 12
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000129 00000 n 
+0000000201 00000 n 
+0000000274 00000 n 
+0000000345 00000 n 
+0000003873 00000 n 
+0000007281 00000 n 
+0000010076 00000 n 
+0000010222 00000 n 
+0000010369 00000 n 
+trailer << /Size 12 /Root 1 0 R >>
+startxref
+10516
+%%EOF
