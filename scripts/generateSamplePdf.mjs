@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 /**
  * Writes a multi-page synthetic research PDF for the PaperCast demo.
- * Uses only the PDF built-in Times fonts — no extra packages.
+ * Uses only the PDF built-in Times fonts. No extra packages.
  */
-const fs = require("fs");
-const path = require("path");
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const TITLE =
   "Civic Attention Decay: Notification Density and Recall in Knowledge Work";
@@ -191,18 +194,6 @@ function pageStream(pageLines) {
 
 function buildPdf() {
   const pages = renderPages();
-  const objects = [];
-  const add = (body) => {
-    objects.push(body);
-    return objects.length;
-  };
-
-  add("<< /Type /Catalog /Pages 2 0 R >>");
-  const kids = [];
-  const fontObj = {};
-  // placeholders: we'll fill page tree later. Build fonts and contents first after reserving 1 catalog and 2 pages.
-
-  // Rebuild with known object numbers.
   const nPages = pages.length;
   const catalogId = 1;
   const pagesId = 2;
@@ -248,7 +239,7 @@ function buildPdf() {
   return pdf;
 }
 
-const out = path.join(__dirname, "..", "public", "samples", "civic-attention-decay.pdf");
+const out = path.join(__dirname, "..", "public", "samples", "CivicAttention.pdf");
 fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, buildPdf());
 console.log("wrote", out, fs.statSync(out).size, "bytes");

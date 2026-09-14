@@ -118,7 +118,7 @@ export async function extractDocument(file: File, id: string): Promise<Extracted
   text = normalizeExtracted(text);
   if (countWords(text) < 8) {
     throw new Error(
-      `“${file.name}” didn’t contain enough readable text. Scanned PDFs without a text layer won’t work — export a text PDF, or try .txt / .md.`
+      `“${file.name}” didn’t contain enough readable text. Scanned PDFs without a text layer won’t work. Export a text PDF, or try .txt or .md.`
     );
   }
 

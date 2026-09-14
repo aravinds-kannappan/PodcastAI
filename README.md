@@ -1,16 +1,14 @@
 # PaperCast
 
-Turn a paper, memo, or notes file into a two-host podcast in the browser. No Speechify account, no OpenAI key, no cloud TTS.
+Turn a paper, memo, or notes file into a two host podcast in the browser. No Speechify account, no OpenAI key, no cloud TTS.
 
-PaperCast extracts text locally, writes a Maya-and-Jordan conversation from the load-bearing sentences in the document, and reads it with the **Web Speech API** that already ships in Chrome and Edge.
-
-This is not trying to beat Speechify. It is the free version you can actually run.
+PaperCast extracts text locally, writes a Maya and Jordan conversation from the important sentences in the document, and reads it with the **Web Speech API** that already ships in Chrome and Edge.
 
 ## What it does
 
-- Upload PDF, Markdown, TXT, HTML, RTF, or DOCX (plus a few cousins like CSV and TeX).
+- Upload PDF, Markdown, TXT, HTML, RTF, or DOCX (plus CSV and TeX).
 - Extract text in the browser (`pdf.js` for PDFs, Mammoth for Word).
-- Build an extractive two-host script — hosts quote and rephrase the page instead of calling an LLM.
+- Build an extractive two host script. Hosts quote and rephrase the page instead of calling an LLM.
 - Play the episode with system voices. Pause, skip lines, change speed, download the script.
 - Sample stack included: a synthetic research PDF plus two shorter notes files.
 
@@ -18,9 +16,13 @@ Nothing leaves your machine except optional sample fetches from this same app. T
 
 ## Run it
 
-Needs Node 22+.
+Verified on this machine with **Node v22.23.2** and **npm 10.9.8**. Use Node 22 or newer.
+
+No environment variables and no `.env` file. The app is fully local.
 
 ```bash
+git clone git@github.com:aravinds-kannappan/PodcastAI.git
+cd PodcastAI
 npm install
 npm run dev
 ```
@@ -29,12 +31,25 @@ Open [http://127.0.0.1:43127](http://127.0.0.1:43127). Drop a PDF or click **Loa
 
 ```bash
 npm run build
-npm start -- --port 43127
+npm start
 ```
 
-## How the “AI” works without an API
+`npm start` also binds to `http://127.0.0.1:43127`.
 
-The script generator scores sentences (abstracts, findings, numbers, hedges), de-duplicates them, and fills host templates. Maya asks; Jordan answers from the text. It will sound like a tight reading of the document, not like a hired comedy duo. That is the point of a free local booth.
+```bash
+npm run lint
+npm run typecheck
+```
+
+Optional: regenerate the bundled sample PDF.
+
+```bash
+npm run makeSamplePdf
+```
+
+## How it works without an API
+
+The script generator scores sentences (abstracts, findings, numbers, hedges), drops near duplicates, and fills host templates. Maya asks; Jordan answers from the text. It will sound like a tight reading of the document, not like a hired comedy duo. That is the point of a free local booth.
 
 Playback uses `window.speechSynthesis`. If your browser has no English voices, install one at the OS level or switch to Chrome.
 

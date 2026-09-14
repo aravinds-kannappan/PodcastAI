@@ -136,7 +136,7 @@ export function FileTray({ items, busy, onChange, onExtracted }: Props) {
         </span>
         <span className="mt-1 max-w-sm text-sm text-muted-foreground">
           PDF, Markdown, TXT, HTML, RTF, or DOCX. Text is extracted here in the
-          browser — nothing is uploaded to a model.
+          browser. Nothing is uploaded to a model.
         </span>
         <span className="mt-3 text-xs font-medium text-primary">
           Click to browse, or drop files on this card

@@ -3,7 +3,7 @@ MEMO
 To: People Ops and the tools guild
 From: Nia Okonkwo, workplace research
 Date: 12 March 2026
-Subject: The quiet hour effect — interruption frequency and working memory
+Subject: The quiet hour effect: interruption frequency and working memory
 
 We measured calendar noise for six remote teams over four weeks. The question was simple: does a protected 90-minute quiet hour change how much people remember from a morning briefing?
 

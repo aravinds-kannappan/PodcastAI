@@ -1,7 +1,7 @@
 import type { ExtractedDoc, HostId, PodcastScript, ScriptLine } from "./types";
 
 const STOP = new Set(
-  "a an the and or but if then so to of in on for with from by as at is are was were be been being this that these those it its their our we they you i not no yes into over under about than also can could should would may might will just than".split(
+  "a an the and or but if then so to of in on for with from by as at is are was were be been being this that these those it its their our we they you i not no yes into over under about than also can could should would may might will just".split(
     " "
   )
 );
@@ -164,7 +164,7 @@ function ask(s: Sentence, i: number): string {
   const hook = clipQuote(s.text, 90);
   const prompts: Record<Sentence["kind"], string[]> = {
     finding: [
-      `Okay, headline time. They write: “${hook}” — is that the result we’re supposed to remember?`,
+      `Okay, headline time. They write: “${hook}” Is that the result we’re supposed to remember?`,
       `This is the part that would go on a conference slide. What did they actually find?`,
     ],
     method: [
@@ -173,7 +173,7 @@ function ask(s: Sentence, i: number): string {
     ],
     number: [
       `That number is doing a lot of work. What’s behind it?`,
-      `I don’t want a vibes summary — what’s the figure, and what does it compare against?`,
+      `I don’t want a vibes summary. What’s the figure, and what does it compare against?`,
     ],
     limit: [
       `They’re hedging. What’s the catch if someone tries to use this on Monday?`,
@@ -200,7 +200,7 @@ function answer(s: Sentence, i: number): { text: string; quote?: string } {
   const quote = clipQuote(s.text, 200);
   if (s.kind === "limit") {
     return {
-      text: `${opener} They flag a real constraint — ${voiced} That’s the grain of salt, not a reason to throw the rest out.`,
+      text: `${opener} They flag a real constraint: ${voiced} That’s the grain of salt, not a reason to throw the rest out.`,
       quote,
     };
   }
@@ -253,7 +253,7 @@ export function generatePodcast(docs: ExtractedDoc[]): PodcastScript {
 
   const titles = docs.map(detectTitle);
   const episodeTitle =
-    titles.length === 1 ? titles[0] : `${titles[0]} — and ${titles.length - 1} more`;
+    titles.length === 1 ? titles[0] : `${titles[0]}, and ${titles.length - 1} more`;
   const totalWords = docs.reduce((n, d) => n + d.wordCount, 0);
   const perDoc = docs.length === 1 ? 8 : Math.max(4, Math.round(10 / docs.length));
   const beats = pickSentences(docs, perDoc);
@@ -271,7 +271,7 @@ export function generatePodcast(docs: ExtractedDoc[]): PodcastScript {
   lines.push(
     line(
       "maya",
-      `You're listening to PaperCast — two people, one stack of documents, no cloud bill. On the desk today: ${fileList}.`
+      `You're listening to PaperCast. Two people, one stack of documents, no cloud bill. On the desk today: ${fileList}.`
     )
   );
 
@@ -288,7 +288,7 @@ export function generatePodcast(docs: ExtractedDoc[]): PodcastScript {
     lines.push(
       line(
         "jordan",
-        `We’ve got ${docs.length} files, about ${totalWords.toLocaleString()} words combined. I’ll take them in order and flag what the pages actually claim — not what we wish they claimed.`
+        `We’ve got ${docs.length} files, about ${totalWords.toLocaleString()} words combined. I’ll take them in order and flag what the pages actually claim, not what we wish they claimed.`
       )
     );
   }
@@ -296,7 +296,7 @@ export function generatePodcast(docs: ExtractedDoc[]): PodcastScript {
   lines.push(
     line(
       "maya",
-      "Deal. If a sentence sounds like marketing, read it anyway. The whole point of a free paper-to-podcast is that we don’t outsource the reading."
+      "Deal. If a sentence sounds like marketing, read it anyway. The whole point of a free paper to podcast is that we don’t outsource the reading."
     )
   );
 
@@ -313,7 +313,7 @@ export function generatePodcast(docs: ExtractedDoc[]): PodcastScript {
       lines.push(
         line(
           "jordan",
-          `Opening that one now. I’ll pull the load-bearing sentences, not the bibliography.`
+          `Opening that one now. I’ll pull the important sentences, not the bibliography.`
         )
       );
     }
@@ -324,7 +324,7 @@ export function generatePodcast(docs: ExtractedDoc[]): PodcastScript {
       lines.push(
         line(
           "maya",
-          "Hold on — if someone’s listening while they cook, what’s the one-line version of what we just covered?"
+          "Hold on. If someone’s listening while they cook, what’s the one line version of what we just covered?"
         )
       );
       lines.push(
@@ -346,7 +346,7 @@ export function generatePodcast(docs: ExtractedDoc[]): PodcastScript {
   lines.push(
     line(
       "maya",
-      "That’s PaperCast. Drop another PDF or notes file when you’ve got one — we’ll make the next show in the browser, no API keys required."
+      "That’s PaperCast. Drop another PDF or notes file when you’ve got one. We’ll make the next show in the browser, no API keys required."
     )
   );
   lines.push(

@@ -12,11 +12,11 @@ function voiceScore(voice: SpeechSynthesisVoice, host: HostId): number {
   if (lang.startsWith("en")) n += 5;
   if (lang.includes("us") || lang.includes("gb") || lang.includes("uk")) n += 1;
   if (host === "maya") {
-    if (/female|samantha|victoria|karen|moira|zira|siri|google us english$|samantha/.test(name))
+    if (/female|samantha|victoria|karen|moira|zira|siri|google us english$/.test(name))
       n += 6;
     if (/male|david|daniel|fred|alex|george/.test(name)) n -= 3;
   } else {
-    if (/male|david|daniel|fred|alex|george|daniel|microsoft david/.test(name)) n += 6;
+    if (/male|david|daniel|fred|alex|george|microsoft david/.test(name)) n += 6;
     if (/female|samantha|victoria|zira/.test(name)) n -= 3;
   }
   if (voice.localService) n += 2;

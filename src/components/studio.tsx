@@ -12,23 +12,23 @@ import type { ExtractedDoc, PodcastScript, UploadItem } from "@/lib/types";
 
 const SAMPLES = [
   {
-    path: "/samples/civic-attention-decay.pdf",
-    name: "civic-attention-decay.pdf",
+    path: "/samples/CivicAttention.pdf",
+    name: "CivicAttention.pdf",
     type: "application/pdf",
   },
   {
-    path: "/samples/sourdough-field-notes.md",
-    name: "sourdough-field-notes.md",
+    path: "/samples/SourdoughNotes.md",
+    name: "SourdoughNotes.md",
     type: "text/markdown",
   },
   {
-    path: "/samples/quiet-hour-memo.txt",
-    name: "quiet-hour-memo.txt",
+    path: "/samples/QuietHourMemo.txt",
+    name: "QuietHourMemo.txt",
     type: "text/plain",
   },
 ];
 
-type Phase = "idle" | "loading-samples" | "writing" | "ready";
+type Phase = "idle" | "loadingSamples" | "writing" | "ready";
 
 export function Studio() {
   const [items, setItems] = useState<UploadItem[]>([]);
@@ -37,13 +37,13 @@ export function Studio() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
 
-  const busy = phase === "writing" || phase === "loading-samples";
+  const busy = phase === "writing" || phase === "loadingSamples";
   const readyCount = items.filter((i) => i.status === "ready").length;
 
   async function makeEpisode(fromDocs = docs) {
     setError(null);
     if (!fromDocs.length) {
-      setError("Add a readable file first — PDF, Markdown, or plain text is enough.");
+      setError("Add a readable file first. PDF, Markdown, or plain text is enough.");
       return;
     }
     setPhase("writing");
@@ -61,7 +61,7 @@ export function Studio() {
 
   async function loadSamples() {
     setError(null);
-    setPhase("loading-samples");
+    setPhase("loadingSamples");
     setScript(null);
     try {
       const files: File[] = [];
@@ -128,13 +128,13 @@ export function Studio() {
             Free listening booth
           </p>
           <h1 className="font-heading mt-2 text-3xl leading-[1.15] font-semibold tracking-tight text-balance sm:text-4xl">
-            Put a paper in. Get a two-host show out.
+            Put a paper in. Get a two host show out.
           </h1>
           <p className="mt-3 text-base leading-relaxed text-muted-foreground text-pretty">
-            PaperCast is a usable, free-as-in-beer stand-in for Speechify’s
-            paper-to-podcast trick. It extracts the text locally, writes a
-            Maya-and-Jordan conversation from the claims on the page, and reads
-            it aloud with the Web Speech API. No OpenAI, no cloud TTS, no keys.
+            PaperCast is a free local stand in for Speechify’s paper to podcast
+            trick. It extracts the text locally, writes a Maya and Jordan
+            conversation from the claims on the page, and reads it aloud with
+            the Web Speech API. No OpenAI, no cloud TTS, no keys.
           </p>
         </section>
 
@@ -171,7 +171,7 @@ export function Studio() {
                 disabled={busy}
                 onClick={() => void loadSamples()}
               >
-                {phase === "loading-samples" ? (
+                {phase === "loadingSamples" ? (
                   <Loader2 className="animate-spin" />
                 ) : (
                   <Sparkles />
@@ -184,8 +184,8 @@ export function Studio() {
               <Alert>
                 <AlertTitle>Marking up the claims</AlertTitle>
                 <AlertDescription>
-                  PaperCast is picking load-bearing sentences and turning them
-                  into back-and-forth — no remote model in the loop.
+                  PaperCast is picking the important sentences and turning them
+                  into a conversation. No remote model in the loop.
                 </AlertDescription>
               </Alert>
             ) : null}
@@ -240,8 +240,8 @@ function EmptyBooth({ loading }: { loading: boolean }) {
           </span>
           <p className="font-heading mt-4 text-lg font-semibold">No episode yet</p>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Drop a paper — or load the sample stack, a research PDF plus two
-            kitchen-science notes — then press Make episode.
+            Drop a paper, or load the sample stack (a research PDF plus two
+            kitchen science notes), then press Make episode.
           </p>
         </>
       )}

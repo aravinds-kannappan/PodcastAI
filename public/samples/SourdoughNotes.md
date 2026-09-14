@@ -1,4 +1,4 @@
-# Sourdough field notes — week 6
+# Sourdough field notes, week 6
 
 I keep these notes on the counter, not in a lab notebook. The starter is six weeks old, fed with rye at night and bread flour in the morning.
 

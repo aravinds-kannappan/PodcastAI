@@ -40,7 +40,7 @@ function downloadScript(script: PodcastScript) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "papercast-script.txt";
+  a.download = "PaperCast script.txt";
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -114,7 +114,7 @@ export function EpisodePlayer({ script }: { script: PodcastScript }) {
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {player.status === "unsupported" ? (
             <p className="text-sm text-background/80">
-              This browser has no Web Speech API. Try Chrome or Edge — playback is
+              This browser has no Web Speech API. Try Chrome or Edge. Playback is
               free and local.
             </p>
           ) : (

@@ -6,9 +6,13 @@
     "dev": "next dev --port 43127 --hostname 127.0.0.1",
     "build": "next build",
     "start": "next start --port 43127 --hostname 127.0.0.1",
-    "lint": "eslint",
-    "samples:pdf": "node scripts/generate-sample-pdf.js",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "makeSamplePdf": "node scripts/generateSamplePdf.mjs",
     "postinstall": "node -e \"const fs=require('fs');fs.mkdirSync('public',{recursive:true});fs.copyFileSync('node_modules/pdfjs-dist/build/pdf.worker.min.mjs','public/pdf.worker.min.mjs')\""
+  },
+  "engines": {
+    "node": ">=22"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
