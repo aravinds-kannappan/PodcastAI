@@ -1,15 +1,20 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Download,
   Gauge,
+  Hand,
+  Loader2,
+  MessageCircleQuestion,
   Mic2,
   Pause,
   Play,
+  Send,
   SkipBack,
   SkipForward,
   Square,
+  X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,16 +50,56 @@ function downloadScript(script: PodcastScript) {
   URL.revokeObjectURL(url);
 }
 
-export function EpisodePlayer({ script }: { script: PodcastScript }) {
+export function EpisodePlayer({
+  script,
+  onActiveClaimId,
+  onInterrupt,
+  interruptBusy,
+}: {
+  script: PodcastScript;
+  onActiveClaimId?: (id: string | null) => void;
+  onInterrupt?: (question: string) => void;
+  interruptBusy?: boolean;
+}) {
   const player = useSpeechPlayer(script.lines);
   const activeRef = useRef<HTMLButtonElement>(null);
+  const [askOpen, setAskOpen] = useState(false);
+  const [askText, setAskText] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     activeRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [player.index]);
 
+  useEffect(() => {
+    const line = script.lines[player.index];
+    onActiveClaimId?.(line?.claimId ?? null);
+  }, [player.index, script.lines, onActiveClaimId]);
+
   const progress =
-    script.lines.length > 0 ? ((player.index + (player.status === "ended" ? 1 : 0)) / script.lines.length) * 100 : 0;
+    script.lines.length > 0
+      ? ((player.index + (player.status === "ended" ? 1 : 0)) / script.lines.length) * 100
+      : 0;
+
+  function handleAskOpen() {
+    if (player.status === "playing") player.pause();
+    setAskOpen(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
+
+  function handleAskSubmit() {
+    const q = askText.trim();
+    if (!q || !onInterrupt) return;
+    onInterrupt(q);
+    setAskText("");
+    setAskOpen(false);
+  }
+
+  function handleAskCancel() {
+    setAskOpen(false);
+    setAskText("");
+    if (player.status === "paused") player.resume();
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
@@ -114,8 +159,7 @@ export function EpisodePlayer({ script }: { script: PodcastScript }) {
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {player.status === "unsupported" ? (
             <p className="text-sm text-background/80">
-              This browser has no Web Speech API. Try Chrome or Edge. Playback is
-              free and local.
+              This browser has no Web Speech API. Try Chrome or Edge.
             </p>
           ) : (
             <>
@@ -162,6 +206,29 @@ export function EpisodePlayer({ script }: { script: PodcastScript }) {
               >
                 <Square />
               </Button>
+
+              {onInterrupt && (
+                <>
+                  <Separator orientation="vertical" className="mx-1 h-6 bg-background/20" />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="text-background hover:bg-background/10 hover:text-background"
+                    onClick={handleAskOpen}
+                    disabled={interruptBusy}
+                    aria-label="Ask the hosts"
+                  >
+                    {interruptBusy ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Hand className="size-3.5" />
+                    )}
+                    Ask the hosts
+                  </Button>
+                </>
+              )}
+
               <Separator orientation="vertical" className="mx-1 h-6 bg-background/20" />
               <div className="flex min-w-36 flex-1 items-center gap-2">
                 <Gauge className="size-3.5 text-background/60" />
@@ -184,20 +251,57 @@ export function EpisodePlayer({ script }: { script: PodcastScript }) {
             </>
           )}
         </div>
-        <p className="mt-3 text-xs text-background/50">
-          Spoken with your browser’s voices via the Web Speech API. No TTS vendor,
-          no key.
-        </p>
+
+        {askOpen && (
+          <div className="mt-3 flex gap-2">
+            <input
+              ref={inputRef}
+              type="text"
+              value={askText}
+              onChange={(e) => setAskText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleAskSubmit();
+                if (e.key === "Escape") handleAskCancel();
+              }}
+              placeholder="Ask the hosts anything about this paper…"
+              className="flex-1 rounded-lg bg-background/10 px-3 py-2 text-sm text-background placeholder:text-background/40 focus:outline-none"
+            />
+            <Button
+              type="button"
+              size="icon"
+              className="bg-orange-400 text-foreground hover:bg-orange-300"
+              onClick={handleAskSubmit}
+              disabled={!askText.trim()}
+            >
+              <Send className="size-3.5" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="text-background hover:bg-background/10 hover:text-background"
+              onClick={handleAskCancel}
+            >
+              <X className="size-3.5" />
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-between gap-2">
         <p className="inline-flex items-center gap-1.5 text-sm font-medium">
           <Mic2 className="size-4 text-primary" />
           Script
+          {script.lines.some((l) => l.id.startsWith("int")) && (
+            <Badge variant="secondary" className="text-[10px]">
+              <MessageCircleQuestion className="mr-1 size-3" />
+              includes your questions
+            </Badge>
+          )}
         </p>
         <Button type="button" size="sm" variant="outline" onClick={() => downloadScript(script)}>
           <Download />
-          Download script
+          Download
         </Button>
       </div>
 
@@ -205,6 +309,7 @@ export function EpisodePlayer({ script }: { script: PodcastScript }) {
         <ol className="flex flex-col gap-1 p-2 sm:p-3">
           {script.lines.map((line, i) => {
             const active = i === player.index && player.status !== "idle";
+            const isInterrupt = line.id.startsWith("int");
             return (
               <li key={line.id}>
                 <button
@@ -212,7 +317,11 @@ export function EpisodePlayer({ script }: { script: PodcastScript }) {
                   ref={active ? activeRef : undefined}
                   onClick={() => player.jumpTo(i)}
                   className={`w-full rounded-xl px-3 py-2.5 text-left transition-colors ${
-                    active ? "bg-accent" : "hover:bg-muted/70"
+                    active
+                      ? "bg-accent"
+                      : isInterrupt
+                        ? "bg-orange-50/50 hover:bg-orange-50"
+                        : "hover:bg-muted/70"
                   }`}
                 >
                   <p
@@ -221,11 +330,16 @@ export function EpisodePlayer({ script }: { script: PodcastScript }) {
                     }`}
                   >
                     {HOSTS[line.host].short}
+                    {isInterrupt && (
+                      <span className="ml-1.5 text-[10px] font-normal normal-case text-muted-foreground">
+                        (your question)
+                      </span>
+                    )}
                   </p>
                   <p className="mt-0.5 text-sm leading-relaxed text-pretty">{line.text}</p>
                   {line.quote ? (
                     <p className="mt-1 border-l-2 border-primary/30 pl-2 text-xs text-muted-foreground italic">
-                      From the page: “{line.quote}”
+                      From the page: &ldquo;{line.quote}&rdquo;
                     </p>
                   ) : null}
                 </button>
